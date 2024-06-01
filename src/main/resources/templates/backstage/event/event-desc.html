@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-hant" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <link th:include="backstage/index :: head">
+    <!-- 可以在這底下加入其他 css 或是 script    -->
+    <script th:src="@{/plugins/ckeditor/ckeditor.js}"></script>
+
+</head>
+
+<body>
+<div id="wrapper" class="">
+    <nav th:replace="backstage/event/event :: navbar"></nav>
+    <div th:insert="backstage/index :: hamburger-btn"></div>
+    <div class="page-content-wrapper">
+        <!-- 頁面內容都放在 content 裡面 -->
+        <div class="content">
+            <!-- 這裡可以放置你想呈現的內容 -->
+            <h2>活動詳細資訊</h2>
+            <div id="editor" th:utext="${event.eventDesc}"></div>
+
+            <input th:if="${message != null}" type="submit" class="btn btn-primary btn-lg" id="save" value="儲存">
+            <input th:if="${message == null}" type="submit" class="btn btn-primary btn-lg" id="create" value="下一步">
+        </div>
+
+    </div>
+</div>
+<script>
+    ClassicEditor
+        .create(document.querySelector(
+            '#editor'))
+        .then(editor => {
+            window.editor = editor;
+
+        })
+        .catch(error => {
+            console.error(error);
+        });
+
+    let saveBtn = document.getElementById('save');
+    let createBtn = document.getElementById('create');
+
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function () {
+            let eventDesc = editor.getData();
+
+            fetch(window.location.pathname, {
+                method: "put",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    eventDesc: eventDesc
+                })
+            }).then(function (response) {
+                if (!response.ok) {
+                    throw new Error(response.status);
+                }
+                return response;
+            })
+                .then(function (result) {
+                    if (result.ok) {
+                        alert("儲存成功~");
+                    }
+                })
+                .catch(function (error) {
+                    console.error('儲存失敗:', error);
+                })
+        });
+    }
+    if (createBtn) {
+        createBtn.addEventListener('click', function () {
+            let eventDesc = editor.getData();
+
+            fetch(window.location.pathname, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    eventDesc: eventDesc
+                })
+            }).then(function (response) {
+                if (!response.ok) {
+                    throw new Error(response.status);
+                }
+                return response;
+            })
+                .then(function (result) {
+                    if (result.redirected) {
+                        window.location.href = result.url;
+                    }
+                })
+                .catch(function (error) {
+                    console.error('儲存失敗:', error);
+                })
+        });
+    }
+
+
+</script>
+</body>
+
+</html>

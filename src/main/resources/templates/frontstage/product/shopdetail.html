@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+
+<html lang="zh-hant" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="frontstage/index2 :: head"></head>
+<link rel="stylesheet" th:href="@{/css/frontstage/product/shopdetail.css}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<body id="body">
+<div th:replace="frontstage/index2 :: header"></div>
+
+<!-- 檢舉Modal開始(點擊我要檢舉觸發彈窗) -->
+<div class="modal fade" id="staticBackdrop" data-backdrop="static" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel"
+                    style="color: red; font-weight: bold; font-size: 30px;">
+                    <center>請 輸 入 檢 舉 原 因</center>
+                </h5>
+            </div>
+            <div class="modal-body">
+                <!-- 表單 -->
+                <form id="productReportForm" method="post" action="/productreport/insert">
+                    <div class="mb-3"><label for="reportReason" class="col-form-label">原因說明:</label><br/><label
+                            style="color: red;">(*提示:字數最大不可超過100個字)</label>
+                        <textarea class="form-control" id="reportReason" name="reportReason"></textarea></div>
+                    <!-- 隱藏的输入字段用於储存訂單編號 -->
+                    <input type="hidden" id="productNo" name="productNo" value="">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <br>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        id="cancel_report">放棄檢舉
+                </button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
+                        th:onclick="submitProductReport([[${productNo}]])">送出檢舉
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 檢舉的Modal結束 -->
+
+<section class="single-product">
+    <div class="container" style="width: 75%; padding: 0;">
+        <div class="row">
+            <div class="col-md-6">
+                <ol class="breadcrumb" style="padding: 0;">
+                    <li><a th:href="@{/}">首頁</a></li>
+                    <li><a th:href="@{/product/shopall}">周邊商品</a></li>
+                    <li class=" product_name active"></li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+<div class="row mt-20">
+    <div class="product-detail container" style="width: 75%; padding: 0;">
+        <div class="col-md-6">
+            <div class="single-product-slider">
+                <div id='carousel-custom' class='carousel slide' data-ride='carousel'>
+                    <div class='carousel-outer'>
+                        <div class='carousel-inner '>
+                            <!--動態顯示圖片-->
+                        </div>
+
+                        <a class='left carousel-control' href='#carousel-custom' data-slide='prev'>
+                            <i class="tf-ion-ios-arrow-left"></i>
+                        </a>
+                        <a class='right carousel-control' href='#carousel-custom' data-slide='next'>
+                            <i class="tf-ion-ios-arrow-right"></i>
+                        </a>
+                    </div>
+
+                    <!-- thumb -->
+                    <ol class='carousel-indicators mCustomScrollbar meartlab'>
+                        <!--縮圖-->
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="single-product-details">
+                <h2 class="product_name" style="margin-top: 10px;"></h2>
+                <div class="product_rating" style="margin-top: 20px;"></div>
+                <div class="sales_info">
+                    <ul>
+                        <li>本商品適用生日優惠券及會員點數折抵</li>
+                        <li>全館不限金額免運</li>
+                    </ul>
+                </div>
+                <div class="price_block">
+                    <span style="margin-right: 65px; font-weight: 700;">價錢:</span>
+                    <div class="product_price" style="display: inline-block"></div>
+                </div>
+
+                <div class="product-quantity">
+                    <span>數量:</span>
+                    <div class="product-quantity-slider">
+                        <input id="product-quantity" type="text" value="1" name="product-quantity"
+                               onchange="checkInputValue(this)">
+                    </div>
+                </div>
+                <div class="product-category">
+                    <span>商品類別:</span>
+                    <ul>
+                        <li class="product_category" style="margin: 0;"><a th:href="@{/product/shopall}"></a></li>
+                    </ul>
+                </div>
+                <div class="product-stock" style="margin-top: 15px;">
+                    <div class="product_stock" style="color: red; font-weight: 700; font-size: 14px;"></div>
+                </div>
+                <div class="buttons" style="margin-top: 20px;">
+                    <a href="#" id="add_to_cart" class="btn btn-main"
+                       style="margin-right: 5px; padding: 11px 12px; font-size: 14px; width: 170px;">加入購物車</a>
+                    <button type="button" id="productReport" class="btn btn-primary btn-lg" data-toggle="modal"
+                            data-target="#staticBackdrop"
+                            style="margin-top: 0; height: 45px; border-radius: 0; background-color: #000; font-size: 14px; padding: 11px 12px; width: 170px;">
+                        <i class="tf-ion-alert"></i>&nbsp;&nbsp;我要檢舉
+                    </button>
+                </div>
+                <div class="favorite_container">
+                    <a id="addToFavorites"
+                       style="margin-right: 5px; padding: 11px 12px; font-size: 12px; color: #f19075; font-weight: 700;"
+                       th:onclick="addToFavorites([[${productNo}]])">
+                        <i class="tf-ion-ios-heart"></i> 加入收藏清單
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="product-comments container" style="width: 75%; padding: 0;">
+            <div class="tabCommon mt-20">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a data-toggle="tab" href="#details" aria-expanded="true">商品描述</a></li>
+                    <li class=""><a id="comment_count" data-toggle="tab" href="#reviews" aria-expanded="false"></a>
+                    </li>
+                </ul>
+                <div class="tab-content patternbg">
+                    <div id="details" class="tab-pane fade active in">
+                        <p class="product_desc"></p>
+                    </div>
+                    <div id="reviews" class="tab-pane fade">
+                        <div class="post-comments">
+                            <ul class="media-list comments-list m-bot-50 clearlist" id="comments_list">
+                                <!-- 動態顯示評論-->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<section class="products related-products section">
+    <div class="container">
+        <div class="row">
+            <div class="title text-center">
+                <h2>相關商品</h2>
+            </div>
+        </div>
+        <div class="row" id="related_products">
+            <!--動態顯示相關商品-->
+        </div>
+    </div>
+</section>
+
+
+<div th:replace="frontstage/index2 :: footer"></div>
+
+</body>
+<script th:src="@{/js/frontstage/product/shopdetail.js}"></script>
+<script>
+    function appendStartsToHtml(averageRate) {
+        // 顯示平均評分
+        let avg_el = document.querySelector('.product_rating');
+        avg_el.innerHTML = '<span class="rating_title">商品評價:</span> ' + generateStartsHtml(averageRate);
+    }
+
+    function generateStartsHtml(averageRate) {
+        node = document.createElement('div');
+        node.className = 'stars';
+
+        // 依照平均分數，動態顯示星星
+        fullStars = Math.floor(averageRate);
+        halfStar = averageRate % 1 >= 0.5 ? 1 : 0;
+        emptyStars = 5 - fullStars - halfStar;
+        // console.log('averageRate', averageRate, 'fullStars:', fullStars, 'halfStar:', halfStar, 'emptyStars:', emptyStars);
+        node.innerHTML += '<i class="fa fa-star"></i>'.repeat(fullStars) +
+            (halfStar ? '<i class="fa fa-star-half-alt"></i>' : '') +
+            '<i class="far fa-star"></i>'.repeat(emptyStars);
+
+        // 顯示分數數值
+        node.innerHTML += `<span class="stars"></span> ${averageRate}/5 `;
+
+        return node.outerHTML
+    }
+
+    // // this function input object is from getProductsByHostAndCategoryAPI "relatedProducts" object(shopdetail.js)
+    function appendRelatedProductsToRelatedProductList(relatedProducts) {
+        let element = document.getElementById('related_products');
+        relatedProducts.forEach(function (relatedProduct) {
+            let html_text = `
+             <div class="col-md-3 related_product_card">
+                <div class="product-item">
+                    <div class="product-thumb">
+                        <img class="img-responsive" src="/product/getFirstImage/${relatedProduct.productNo}" alt="${relatedProduct.productNo}"/>
+                    </div>
+                    <div class="product-content">
+                        <h4><a href="/product/shopdetail?productNo=${relatedProduct.productNo}">${relatedProduct.productName}</a></h4>
+                        <p class="price">$${relatedProduct.productPrice}</p>
+                    </div>
+                </div>
+            </div>
+            `;
+            element.innerHTML += html_text;
+        });
+    }
+
+    // this function input object is from autoGetCommentsDetailByProductNoAPI "userDetails" object(shopdetail.js)
+    function appendCommentToCommentList(commentsDetail, commentCount) {
+        let element = document.getElementById('comments_list');
+        document.querySelector('#comment_count').innerText = `商品評論 (${commentCount})`;
+
+        if (commentCount === 0) {
+            element.innerHTML = `<p>目前尚無評論</p>`
+        } else {
+            let rateHtml = generateStartsHtml(commentsDetail.rate);
+            let htmlText = `
+                <li class="media">
+                    <div class="media-body">
+                        <div class="comment-info">
+                            <h4 class="comment-author">
+                                <span id="member_name" style="font-size: 14px;">${commentsDetail.memberMail}</span>
+                            </h4>
+                            ${rateHtml}
+                        </div>
+                        <p>
+                            ${commentsDetail.comment}
+                        </p>
+                    </div>
+
+                </li>
+            `
+            element.innerHTML += htmlText;
+        }
+    }
+
+    function anonymizeEmail(memberMail) {
+        // 從@切分字串，分成local part 和 domain
+        let parts = memberMail.split('@');
+        let account = parts[0];
+        let domain = parts[1];
+        if (account.length > 2) {
+            let maskedaccount = account.substring(0, 2) + '*'.repeat(account.length - 2);
+            return maskedaccount + '@' + domain;
+        }
+        return account + '@' + domain;
+    }
+
+    function checkInputValue(input) {
+        let max = input.getAttribute('max');  // 獲取設定的最大值
+        if (parseInt(input.value) > parseInt(max)) {
+            input.value = max;  // 如果輸入值超過最大值，則將其設定為最大值
+        }
+    }
+
+</script>
+
+<script th:inline="javascript">
+
+    var productNo = [[${productNo}]];
+
+    // 商品評論
+    autoGetCommentsDetailByProductNoAPI(productNo)
+        .then(function (result) {
+            if (result.count === 0) {
+                appendCommentToCommentList(null, 0);
+            } else {
+                result.details.forEach(function (commentDetail) {
+                    appendCommentToCommentList(commentDetail, result.count);
+                });
+            }
+            // 依照comment response取得的平均評分，動態顯示星星
+            appendStartsToHtml(result.averageRate);
+        });
+
+    // 商品輪播圖及詳細資訊
+    getProductImages(productNo).then(function (imageUrls) {
+        // console.log(imageUrls);
+        let carouselIndicators = document.querySelector('.carousel-indicators');
+        let carouselInner = document.querySelector('.carousel-inner');
+
+        imageUrls.forEach((url, index) => {
+            // carousel-indicator
+            let indicator = document.createElement('li');
+            indicator.setAttribute('data-target', '#carousel-custom');
+            indicator.setAttribute('data-slide-to', index);
+            if (index === 0) indicator.classList.add('active');
+            let thumb_img = document.createElement('img');
+            thumb_img.src = url;
+            indicator.appendChild(thumb_img);
+            carouselIndicators.appendChild(indicator);
+
+            // carousel-inner
+            let item = document.createElement('div');
+            item.className = 'item' + (index === 0 ? ' active' : '');
+            let img = document.createElement('img');
+            img.src = url;
+            img.setAttribute('data-zoom-image', url);
+            item.appendChild(img);
+            carouselInner.appendChild(item);
+        });
+    });
+
+    getProductDetailAPI(productNo).then(function (product) {
+        // 頁面有兩個 class="product_name" 元素 -> querySelectorAll
+        let productNames = document.querySelectorAll('.product_name');
+        productNames.forEach((productName) => {
+            productName.innerText = product.productName;
+        })
+        document.querySelector('.product_price').innerText = `NT $${product.productPrice}`;
+        document.querySelector('.product_category').innerText = product.productCategory.productCategoryName;
+        document.querySelector('.product_stock').innerText = `庫存數量剩 ${product.remainingQty} 件`;
+        document.querySelector('.product_desc').innerText = product.productDesc;
+        document.querySelector('#product-quantity').setAttribute('max', product.remainingQty);
+
+        // 相關商品
+        hostNo = product.host.hostNo;
+        productCategoryNo = product.productCategory.productCategoryNo;
+        getProductsByHostAndCategoryAPI(hostNo, productCategoryNo, productNo)
+            .then(function (relatedProducts) {
+                appendRelatedProductsToRelatedProductList(relatedProducts);
+            });
+    })
+
+    // 加入購物車
+    document.getElementById('add_to_cart').addEventListener('click', function (e) {
+        e.preventDefault();
+        let input_el = document.getElementById('product-quantity');
+        input_el.setAttribute('data-product-no', productNo);
+        let quantity = document.getElementById('product-quantity').value;
+        // console.log('quantity7878:', quantity);
+        autoIncreaseCartQuantityAndSetUI(productNo, quantity);
+    });
+
+    //  放棄檢舉按鈕
+    document.addEventListener('DOMContentLoaded', function () {
+        let button = document.getElementById('cancel_report');
+        button.setAttribute('data-product-no', productNo);
+        button.onclick = function () {
+            window.location.href = '/product/shopdetail?productNo=' + this.getAttribute('data-product-no');
+        };
+    });
+</script>
+
+
+<!--收藏Ajax開始-->
+<script>
+    function addToFavorites(productNo) {
+
+        // 先檢查用戶是否已經登錄
+        $.ajax({
+            type: 'GET',
+            url: '/auth/status',
+            success: function (isLoggedIn) {
+                if (!isLoggedIn) {
+                    Swal.fire('請先登入', '很抱歉，需要先登入才能進行收藏', 'warning');
+                    return;
+                }
+
+                // 用戶已登錄，繼續執行收藏操作
+                var formData = {
+                    productNo: productNo
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/saveproduct/insert',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function (response) {
+                        Swal.fire('操作成功', response.message, 'success');
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('AJAX error response:', status, error);
+                        Swal.fire('提交失败', '請聯繫客服人員協助。', 'error');
+                    }
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error('Error checking auth status:', status, error);
+                Swal.fire('錯誤', '檢查登入狀態時發生錯誤。', 'error');
+            }
+        });
+    }
+</script>
+<!--收藏Ajax結束-->
+
+<!--檢舉Ajax開始-->
+<script>
+    function submitProductReport(productNo) {
+
+        // 先檢查用戶是否已經登錄
+        $.ajax({
+            type: 'GET',
+            url: '/auth/status',
+            success: function (isLoggedIn) {
+                if (!isLoggedIn) {
+                    Swal.fire('請先登入', '很抱歉，需要先登入才能進行檢舉', 'warning');
+                    return;
+                }
+
+                var reportReason = $("#reportReason").val().trim();
+
+                // 檢查 reportReason 是否為空白
+                if (reportReason === "") {
+                    Swal.fire('提交失敗', '很抱歉，檢舉原因不可為空白。', 'error');
+                    return;
+                }
+
+                var formData = {
+                    productNo: productNo,
+                    reportReason: reportReason,
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/productreport/insert',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function (response) {
+                        console.log('Success response received:', response);
+                        Swal.fire({
+                            title: '提交成功',
+                            text: "檢舉資料已成功送出，感謝您寶貴的意見。",
+                            icon: 'success',
+                            confirmButtonColor: '#3d5dff',
+                            confirmButtonText: '確定',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.log('AJAX error response:', status, error);
+                        Swal.fire('提交失敗', '請確認字數是否超過上限。', 'error');
+                    }
+                });
+            },
+            error: function (xhr, status, error) {
+                console.log('Error checking auth status:', status, error);
+                Swal.fire('錯誤', '檢查登錄狀態時發生錯誤。', 'error');
+            }
+        });
+    }
+</script>
+<!--檢舉Ajax結束-->
+
+</html>

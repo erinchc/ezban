@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-hant" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="frontstage/index2 :: head">
+    <title>ezban | save_product</title>
+</head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+    .dashboard-menu li a {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 999px; /* 將數值設置為一個足夠大的值，使按鈕呈現橢圓形 */
+        transition: background-color 0.5s; /* 背景顏色過渡效果 */
+        text-decoration: none; /* 移除超連結的下劃線 */
+    }
+
+    .dashboard-menu li a:hover {
+        background-color: blue; /* 滑鼠懸停時的背景顏色 */
+        transform: scale(1.2);
+        font-weight: bold;
+    }
+
+    .btn-icon {
+        color: lightgray;
+        font-size: 30px;
+        transition: all 0.3s ease; /* 添加過渡效果 */
+    }
+
+    /* 懸停效果 */
+    .btn:hover .btn-icon {
+        color: #1515d9; /* 懸停時變成藍色 */
+        transform: scale(1.6); /* 懸停時放大 */
+    }
+
+    #example th {
+        padding: 5px; /* 調整單元格內邊距 */
+        text-align: center; /* 將文字置中 */
+        font-size: 16px; /* 調整字體大小 */
+        line-height: 1.4; /* 調整行高 */
+    }
+
+    #example td {
+        padding: 5px; /* 調整單元格內邊距 */
+        text-align: center; /* 將文字置中 */
+        font-size: 14px; /* 調整字體大小 */
+        line-height: 1.4; /* 調整行高 */
+    }
+
+    #example th {
+        background-color: #f2f2f2; /* 設置表頭背景色 */
+        font-weight: bold; /* 加粗表頭文字 */
+    }
+
+    #example tr:nth-child(even) {
+        background-color: #f9f9f9; /* 隔行變色 */
+    }
+
+    /* 淺灰色小點樣式 */
+    .dot-lightgray::before {
+        content: '';
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 5px;
+        border-radius: 50%;
+        background-color: lightgray;
+    }
+
+    /* 藍色小點樣式 */
+    .dot-blue::before {
+        content: '';
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 5px;
+        border-radius: 50%;
+        background-color: blue;
+    }
+
+    /* 圖片容器，設置為內聯區塊並相對定位 */
+    .img-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    /* 圖片初始狀態，設定寬度和過渡效果，並設定初始的圓角矩形 */
+    .img-container img {
+        width: 100px;
+        transition: transform 0.3s ease, z-index 0.3s ease, border-radius 0.3s ease;
+        /*border-radius: 10px; !* 初始的圓角矩形 *!*/
+    }
+
+    /* 當滑鼠懸停時，圖片放大且提升堆疊順序，同時使圖片變為圓角 */
+    .img-container:hover img {
+        transform: scale(1.5); /* 整體放大圖片 */
+        z-index: 10; /* 提升放大圖片的堆疊順序 */
+        position: relative; /* 確保z-index生效 */
+        border-radius: 15px; /* 放大後更圓的矩形 */
+    }
+</style>
+<body id="body">
+<div th:replace="frontstage/index2 :: header"></div>
+<div class="content">
+    <h1 class="page-name"
+        style="color: #333; font-family: 'Arial', sans-serif; font-size: 35px; font-weight: bold; margin-left: 80px; margin-top: 50px;">
+        <i class="fa-regular fa-bookmark"></i> &nbsp;&nbsp;我 的 收 藏 夾 </h1>
+
+    <!-- Start breadcrumb -->
+    <section class="single-product" style="padding: 20px 0 40px 10px;">
+        <div class="container" style="width: 75%; margin-left: 55px;">
+            <div class="row">
+                <div class="col-md-6">
+                    <ol class="breadcrumb" style="padding: 0;">
+                        <li><a th:href="@{/}">首頁</a></li>
+                        <li><a th:href="@{/product/shopall}">周邊商品</a></li>
+                        <li class=" saveProduct active">我的收藏夾</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- End breadcrumb -->
+
+    <section class="user-dashboard">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12" style=" margin-bottom: 100px;">
+                    <div class="container">
+                        <ul class="list-inline dashboard-menu text-center">
+                            <li><a id="button0" href="javascript:void(0)" onclick="showContent(1)" data-status="1"
+                                   class="active">目前收藏</a></li>
+                            <li><a id="button1" href="javascript:void(0)" onclick="showContent(0)"
+                                   data-status="0">歷史收藏</a></li>
+                        </ul>
+                        <div class="dashboard-wrapper user-dashboard">
+                            <div class="table-responsive">
+                                <table id="example" class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>商品圖片</th>
+                                        <th>商品名稱 [編號]</th>
+                                        <th>商品詳情</th>
+                                        <th>商品金額</th>
+                                        <th>收藏狀態</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+
+                                    <!-- 判斷 saveProductListData 是否為空，若空則顯示 "收藏夾是空的，趕緊去收藏吧 !" -->
+                                    <tr th:if="${#lists.isEmpty(saveProductListData)}">
+                                        <td colspan="6px"
+                                            style="text-align: center; font-size: 20px; padding-top: 15px;">
+                                            收藏夾是空的，趕緊去收藏吧 !
+                                        </td>
+                                    </tr>
+
+                                    <th:block th:each="saveProduct : ${saveProductListData}">
+                                        <tr>
+                                            <td>
+                                                <div class="img-container">
+                                                    <img th:src="@{/saveproduct/DBGifReader(productNo=${saveProduct.product.productNo})}"
+                                                         alt="Product Image">
+                                                </div>
+                                            </td>
+                                            <td style="vertical-align: middle"
+                                                th:text="${saveProduct.product.productName} + ' [' + ${saveProduct.product.productNo} + ']'"></td>
+                                            <td style="vertical-align: middle">
+                                                <form method="get" th:action="@{/product/shopdetail}">
+                                                    <button type="submit" class="btn btn-link p-0">
+                                                        <i class="fa-solid fa-eye btn-icon"></i>
+                                                    </button>
+                                                    <input type="hidden" name="productNo"
+                                                           th:value="${saveProduct.product.productNo}">
+                                                </form>
+                                            </td>
+                                            <td style="vertical-align: middle"
+                                                th:text="${'NT$ '+saveProduct.product.productPrice}"></td>
+                                            <td style="vertical-align: middle"
+                                                th:data-status="${saveProduct.saveStatus}">
+                                                <span th:if="${saveProduct.saveStatus == 0}"><span
+                                                        class="dot-lightgray"></span>已取消</span>
+                                                <span th:if="${saveProduct.saveStatus == 1}"><span
+                                                        class="dot-blue"></span>已收藏</span>
+                                            </td>
+                                        </tr>
+                                    </th:block>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div th:replace="frontstage/index2 :: footer"></div>
+</div>
+</body>
+
+<script>
+    $(document).ready(function () {
+        // 初始設定，只顯示"目前收藏"
+        filterSaves(1);
+
+        // 點擊事件處理
+        $('.dashboard-menu li a').click(function () {
+            var status = $(this).data('status');
+            filterSaves(status);
+
+            // 添加/移除按钮的 active class
+            $('.dashboard-menu li a').removeClass('active');
+            $(this).addClass('active');
+        });
+
+        function filterSaves(status) {
+            // 隱藏所有內容
+            $('.table tbody tr').hide();
+
+            // 顯示所有符合狀態的內容
+            $('.table tbody tr').each(function () {
+                var saveStatus = $(this).find('td[data-status]').data('status');
+                if (saveStatus == status) {
+                    $(this).show();
+                }
+            });
+        }
+
+        //在按鈕外部調用過濾函數,來定義全局showContent 函数
+        window.showContent = function (status) {
+            filterSaves(status);
+
+            // 更新按钮的 active class
+            $('.dashboard-menu li a').removeClass('active');
+            $('.dashboard-menu li a[data-status="' + status + '"]').addClass('active');
+        };
+    });
+</script>
+
+</html>

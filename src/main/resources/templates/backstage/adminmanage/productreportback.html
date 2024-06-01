@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理員檢視和處理檢舉</title>
+    <link th:include="backstage/index :: head">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            text-align: center;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+            text-align: center;
+        }
+        .action-button {
+            margin: 5px;
+            background-color: #4F4F4F;
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+        .action-button:hover {
+            background-color: #3A3A3A;
+        }
+        .comment-item.inappropriate {
+            opacity: 0.5;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+        }
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4em;
+            background-color: #4F4F4F;
+            color: white;
+        }
+        .pagination .active {
+            font-weight: bold;
+            background-color: blue;
+            color: white;
+        }
+        .back-button {
+            background-color: #4F4F4F;
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .back-button:hover {
+            background-color: #3A3A3A;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <nav th:replace="backstage/index :: navbar"></nav>
+        <div class="page-content-wrapper">
+            <div class="content">
+                <h1>商品管理員檢視和處理檢舉</h1>
+                <a href="/adminmanage" class="back-button">回上一頁</a>
+                <div id="admin-info"></div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>檢舉編號</th>
+                            <th>評論編號</th>
+                            <th>評論內容</th>
+                            <th>檢舉人會員編號</th>
+                            <th>檢舉原因</th>
+                            <th>檢舉日期</th>
+                            <th>檢舉狀態</th>
+                            <th>是否通過檢舉</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reports-display">
+                    </tbody>
+                </table>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let allReports = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            displayAdminInfo();
+            loadReports();
+        });
+
+        function displayAdminInfo() {
+            const adminId = sessionStorage.getItem('adminId');
+            if (!adminId) {
+                alert('獲取管理員信息失敗，請重新登錄');
+                window.location.href = '/adminlogin';
+                return;
+            }
+            // 顯示管理員信息的代碼
+        }
+
+        async function loadReports() {
+            try {
+                const response = await fetch('/api/product/comment/report', {
+                    method: 'GET'
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    allReports = data;
+                    displayReports(currentPage);
+                    setupPagination();
+                } else {
+                    alert(`加載檢舉數據出錯: ${data.message}`);
+                }
+            } catch (error) {
+                console.error('加載檢舉數據出錯:', error);
+            }
+        }
+
+        function displayReports(page) {
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+
+            // 對報告進行排序，將「尚未處理」的放在最前面
+            const sortedReports = allReports.sort((a, b) => a.reportStatus - b.reportStatus);
+            const paginatedReports = sortedReports.slice(start, end);
+
+            const reportsDisplay = document.getElementById('reports-display');
+            reportsDisplay.innerHTML = '';
+
+            paginatedReports.forEach(report => {
+                const reportClass = report.reportStatus !== 0 ? 'inappropriate' : '';
+                const reportStatusText = getReportStatusText(report.reportStatus);
+                const reportRow = document.createElement('tr');
+                reportRow.className = `comment-item ${reportClass}`;
+                reportRow.dataset.reportId = report.productCommentReportNo;
+                reportRow.innerHTML = `
+                    <td>${report.productCommentReportNo}</td>
+                    <td>${report.productCommentNo}</td>
+                    <td>${report.productCommentContent}</td>
+                    <td>${report.memberNo}</td>
+                    <td>${report.reportReason}</td>
+                    <td>${report.formattedReportDate}</td>
+                    <td>${reportStatusText}</td>
+                    <td>
+                        <button class="btn action-button" onclick="confirmHandleReport(${report.productCommentReportNo}, true)">正常發言</button>
+                        <button class="btn action-button" onclick="confirmHandleReport(${report.productCommentReportNo}, false)">封鎖評論</button>
+                    </td>
+                `;
+                reportsDisplay.appendChild(reportRow);
+            });
+        }
+
+        function getReportStatusText(status) {
+            switch (status) {
+                case 0:
+                    return '尚未處理';
+                case 1:
+                    return '正常發言';
+                case 2:
+                    return '已封鎖';
+                default:
+                    return '未知狀態';
+            }
+        }
+
+        function setupPagination() {
+            const pageCount = Math.ceil(allReports.length / itemsPerPage);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            const firstButton = document.createElement('button');
+            firstButton.innerText = '最前頁';
+            firstButton.classList.add('btn');
+            firstButton.onclick = () => {
+                currentPage = 1;
+                displayReports(currentPage);
+                setupPagination();
+            };
+            pagination.appendChild(firstButton);
+
+            const prevButton = document.createElement('button');
+            prevButton.innerText = '上一頁';
+            prevButton.classList.add('btn');
+            prevButton.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayReports(currentPage);
+                    setupPagination();
+                }
+            };
+            pagination.appendChild(prevButton);
+
+            for (let i = 1; i <= pageCount; i++) {
+                const button = document.createElement('button');
+                button.innerText = i;
+                button.classList.add('btn');
+                button.onclick = () => {
+                    currentPage = i;
+                    displayReports(currentPage);
+                    setupPagination();
+                };
+                if (i === currentPage) {
+                    button.classList.add('active');
+                }
+                pagination.appendChild(button);
+            }
+
+            const nextButton = document.createElement('button');
+            nextButton.innerText = '下一頁';
+            nextButton.classList.add('btn');
+            nextButton.onclick = () => {
+                if (currentPage < pageCount) {
+                    currentPage++;
+                    displayReports(currentPage);
+                    setupPagination();
+                }
+            };
+            pagination.appendChild(nextButton);
+
+            const lastButton = document.createElement('button');
+            lastButton.innerText = '最後頁';
+            lastButton.classList.add('btn');
+            lastButton.onclick = () => {
+                currentPage = pageCount;
+                displayReports(currentPage);
+                setupPagination();
+            };
+            pagination.appendChild(lastButton);
+        }
+
+        function confirmHandleReport(reportId, approve) {
+            const action = approve ? '正常發言' : '封鎖評論';
+            if (confirm(`確定要將此評論設置為"${action}"嗎？`)) {
+                handleReport(reportId, approve);
+            }
+        }
+
+        async function handleReport(reportId, approve) {
+            const data = {
+                reportStatus: approve ? 1 : 2,
+                adminNo: sessionStorage.getItem('adminId')
+            };
+
+            try {
+                const response = await fetch(`/api/product/comment/report/${reportId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                alert(`檢舉已${approve ? '拒絕' : '同意'}！`);
+                loadReports();
+            } catch (error) {
+                console.error('處理檢舉出錯:', error);
+                alert('處理檢舉失敗');
+            }
+        }
+    </script>
+</body>
+</html>

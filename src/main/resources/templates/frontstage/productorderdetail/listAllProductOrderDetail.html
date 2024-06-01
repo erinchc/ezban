@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-hant" xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="frontstage/index2 :: head">
+    <title>ezban | product_order_detail</title>
+</head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+    .item span {
+        display: inline-block; /* 讓每個標題和內容都水平排列 */
+        width: 150px; /* 設置標題的寬度 */
+        font-weight: bold;
+    }
+
+    #example {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    #example th {
+        padding: 5px; /* 調整單元格內邊距 */
+        text-align: center; /* 將文字置中 */
+        font-size: 16px; /* 調整字體大小 */
+        line-height: 1.4; /* 調整行高 */
+    }
+
+    #example td {
+        padding: 5px; /* 調整單元格內邊距 */
+        text-align: center; /* 將文字置中 */
+        font-size: 14px; /* 調整字體大小 */
+        line-height: 1.4; /* 調整行高 */
+    }
+
+    #example th {
+        background-color: #f2f2f2; /* 設置表頭背景色 */
+        font-weight: bold; /* 加粗表頭文字 */
+    }
+
+    #example tr:nth-child(even) {
+        background-color: #f9f9f9; /* 隔行變色 */
+    }
+
+    .navbar-brand:hover span {
+        color: black;
+    }
+
+    /* 圖片容器，設置為內聯區塊並相對定位 */
+    .img-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    /* 圖片初始狀態，設定寬度和過渡效果，並設定初始的圓角矩形 */
+    .img-container img {
+        width: 100px;
+        transition: transform 0.3s ease, z-index 0.3s ease, border-radius 0.3s ease;
+        /*border-radius: 10px; !* 初始的圓角矩形 *!*/
+    }
+
+    /* 當滑鼠懸停時，圖片放大且提升堆疊順序，同時使圖片變為圓角 */
+    .img-container:hover img {
+        transform: scale(1.5); /* 整體放大圖片 */
+        z-index: 10; /* 提升放大圖片的堆疊順序 */
+        position: relative; /* 確保z-index生效 */
+        border-radius: 15px; /* 放大後更圓的矩形 */
+    }
+</style>
+
+<body id="body">
+<div th:replace="frontstage/index2 :: header"></div>
+<div class="content">
+    <a class="navbar-brand" th:href="@{/productorder/findByMember}"
+       style="display: inline-block; float: right; color: darkgray; font-size: 20px; font-weight: bold; text-decoration: none; margin-right: 40px;">
+        <span style="transition: color 0.3s;"><i class="fa-solid fa-square-caret-left"></i> 回我的訂單</span></a>
+    <h1 class="page-name" ,
+        style="color: #333; font-family: 'Arial', sans-serif; font-size: 35px; font-weight: bold; margin-left: 80px; margin-top: 50px;">
+        <i class="fa-solid fa-circle-info"></i> &nbsp;&nbsp;訂 單 明 細 </h1>
+    <section class="user-dashboard">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12" style=" margin-bottom: 100px;">
+                    <div class="container">
+                        <div class="dashboard-wrapper user-dashboard">
+                            <div class="table-responsive">
+                                <table id="example" class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>訂單編號</th>
+                                        <th>廠商名稱 [編號]</th>
+                                        <th>商品圖片</th>
+                                        <th>商品名稱</th>
+                                        <th>單價</th>
+                                        <th>數量</th>
+                                        <th>小計</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <th:block th:each="productOrderDetail : ${productOrderDetailListData}">
+                                        <tr>
+
+                                            <td style="vertical-align: middle"
+                                                th:text="${productOrderDetail.productOrder.productOrderNo}"></td>
+                                            <td style="vertical-align: middle"
+                                                th:text="${productOrderDetail.product.host.hostName + ' ['+productOrderDetail.product.host.hostNo + ']'}"></td>
+                                            <td>
+                                                <div class="img-container">
+                                                    <img th:src="@{/productorderdetail/DBGifReader(productNo=${productOrderDetail.product.productNo})}"
+                                                         width="100px">
+                                                </div>
+                                            </td>
+                                            <td style="vertical-align: middle"
+                                                th:text="${productOrderDetail.product.productName}"></td>
+                                            <td style="vertical-align: middle"
+                                                th:text="${'NT$ '+ productOrderDetail.product.productPrice}"></td>
+                                            <td style="vertical-align: middle"
+                                                th:text="${productOrderDetail.productQty}"></td>
+                                            <td style="vertical-align: middle"
+                                                th:text="${'NT$ ' + productOrderDetail.productPrice}"></td>
+                                        </tr>
+                                    </th:block>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div th:replace="frontstage/index2 :: footer"></div>
+</div>
+</body>
+
+</html>

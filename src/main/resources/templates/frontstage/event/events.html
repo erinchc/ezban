@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html lang="zh-hant" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <link th:include="frontstage/index2 :: head">
+
+    <!--    收藏用的彈窗    -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        .event-container {
+            min-height: 50vh;
+        }
+        .favorite {
+            color: red;
+        }
+        .product-content {
+            height: 60px;
+        }
+
+        .product-content h4, .product-content p {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .product-content h4 a {
+            text-align: center;
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .product-item {
+            transition: transform 0.3s ease;
+            transform-origin: center;
+        }
+
+        .product-item:hover {
+            transform: scale(1.05);
+        }
+
+        .panel-title.allProducts {
+            border: 1.2px solid #ddd;
+        }
+
+        ul.categories {
+            padding: 0;
+        }
+
+        .categories li {
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+
+        .categories li a {
+            display: block;
+            width: 100%;
+            height: 100%;
+            color: #555;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .categories li:hover {
+            background: #f8f6f6;
+            color: black;
+        }
+
+        .small-info {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .product-content .visit-count {
+            display: flex;
+            align-items: center;
+        }
+
+        .product-content .event-location {
+            margin-right: 10px; /* 調整間距 */
+        }
+
+        #load-more {
+            background-color: #f0e7e4;
+            color: #22273c;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        #load-more:hover {
+            background-color: #f1dcd5;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* 新增的CSS */
+        .filter-column {
+            width: 23%; /* 調整篩選活動區塊的寬度 */
+            float: left;
+        }
+
+        .events-column {
+            width: 77%; /* 調整活動卡片容器的寬度 */
+            float: right;
+        }
+
+        .event-item {
+            width: 30%;
+            margin: 1.5%;
+            float: left;
+        }
+        #event-img {
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+
+<body id="body" th:data-member-no="${memberNo}" onload="initFavorites()">
+<div th:replace="frontstage/index2 :: header"></div>
+<!--breadcrumb-->
+<section class="page-header">
+    <div class="container" style="width: 75%;">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="content">
+                    <h1 class="page-name">活動</h1>
+                    <ol class="breadcrumb">
+                        <li><a th:href="@{/}">首頁</a></li>
+                        <li class="active">活動</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 頁面內容 -->
+<section class="events section">
+    <div class="container event-container">
+
+        <div class="row">
+            <div class="col-md-3">
+
+                <div class="widget product-category">
+                    <h4 class="widget-title" style="font-size: 16px;">篩選活動</h4>
+                    <form class="" method="get" action="/events">
+                        <div class="form-group">
+                            <input type="text" name="eventName" class="form-control" placeholder="搜尋活動名稱" value="">
+                        </div>
+                        <div class="form-group">
+                            <select name="cities" class="form-control" multiple>
+                                <option th:each="city : ${eventCities}" th:value="${city}" th:text="${city}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <select name="categoryNos" class="form-control" multiple>
+                                <option th:each="category : ${eventCategories}" th:value="${category.eventCategoryNo}"
+                                        th:text="${category.eventCategoryName}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="date" id="start" name="startTime" />
+                            <label>到</label>
+                            <input type="date" id="end" name="endTime" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">搜尋</button>
+                        <button id="clear-filter" type="button" class="btn btn-primary">清除篩選</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-9" id="event-container">
+                <div class=" col-md-4" th:each="event : ${events}">
+                    <div class="product-item">
+                        <div class="product-thumb">
+                            <img id="event-img" class="img-responsive" th:src="'data:image/jpeg;base64, '+${event.eventImg}"
+                                 alt="event-img"/>
+                            <div class="preview-meta">
+                                <ul>
+                                    <li>
+                                        <a th:href="@{'/events/' + ${event.eventNo}}"><i
+                                                class="tf-ion-ios-search-strong"></i></a>
+                                    </li>
+                                    <li>
+                                        <a href="#!" th:data-event-no="${event.eventNo}" onclick="toggleFavorite(this, event)"><i class="tf-ion-ios-heart"></i></a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="product-content event-content">
+                            <h4><a th:href="@{'/events/' + ${event.eventNo}}" th:text="${event.eventName}"></a></h4>
+                            <p class="date"
+                               th:text="${#dates.format(event.eventStartTime, 'yyyy-MM-dd HH:mm')} + ' ~ ' + ${#dates.format(event.eventEndTime, 'yyyy-MM-dd HH:mm')}"></p>
+                            <div class="small-info">
+                                <div class="event-location">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="#989797"
+                                         class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
+                                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/>
+                                    </svg>
+                                    <span class="location" th:text="${event.eventCity}"></span>
+                                </div>
+                                <div class="visit-count">
+                                    <i class="fa-regular fa-eye"></i>
+                                    <span class="location" th:text="${event.visitCount}"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 text-center">
+                <button id="load-more" onclick="loadMoreEvents()">載入更多</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div th:replace="frontstage/index2 :: footer"></div>
+
+<script>
+    function checkLoginStatus() {
+        return fetch('/frontstage/memberchat/checkLoginStatus')
+            .then(response => response.json())
+            .then(data => data.loggedIn)
+            .catch(error => {
+                console.error('檢查登入狀態時出錯:', error);
+                return false;
+            });
+    }
+
+    function toggleFavorite(element, e) {
+        e.preventDefault();
+
+        checkLoginStatus().then(isLoggedIn => {
+            if (!isLoggedIn) {
+                const currentUrl = window.location.href;
+                window.location.href = '/loginPage?redirect=' + encodeURIComponent(currentUrl);
+                return;
+            }
+
+            const icon = element.querySelector('i');
+            const isFavorite = icon.classList.contains('favorite');
+            const eventNoStr = element.getAttribute('data-event-no');
+            const eventNo = parseInt(eventNoStr, 10);
+
+            if (isNaN(eventNo)) {
+                console.error('活動編號轉換失敗，值為:', eventNoStr);
+                return;
+            }
+
+            const newStatus = isFavorite ? 0 : 1;
+            const memberNo = document.getElementById('body').getAttribute('data-member-no');
+
+            const data = {
+                eventNo: eventNo,
+                memberNo: parseInt(memberNo, 10)
+            };
+
+            fetch('/saveevent/insert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(data).toString()
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (newStatus === 1) {
+                            icon.classList.add('favorite');
+                            icon.style.color = 'red';
+                            Swal.fire({
+                                title: '已收藏',
+                                text: '你已收藏該活動。',
+                                icon: 'success',
+                                confirmButtonText: '確定'
+                            });
+                        } else {
+                            icon.classList.remove('favorite');
+                            icon.style.color = '';
+                            Swal.fire({
+                                title: '取消收藏',
+                                text: '你已取消收藏該活動。',
+                                icon: 'warning',
+                                confirmButtonText: '確定'
+                            });
+                        }
+                    } else {
+                        console.error("收藏操作失敗");
+                    }
+                })
+                .catch(error => {
+                    console.error('錯誤:', error);
+                });
+        });
+    }
+</script>
+
+<script>
+    let page = 1;
+
+    function loadMoreEvents() {
+        page++;
+        // 取得原本的url以及參數
+        let url = window.location.href;
+        let params = new URLSearchParams(url.split('?')[1]);
+
+        // 組合新的url
+        let newUrl = url.split('?')[0] + '?' + params.toString();
+        fetch(window.location.pathname + "/page/" + page + "?" + params.toString())
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('event-container');
+                if (data.length === 0) {
+                    alert('沒有更多活動了~');
+                    $('#load-more').hide();
+                    return;
+                }
+                data.forEach(event => {
+                    // 格式化時間
+                    const eventStartTime = new Date(event.eventStartTime).toLocaleString('zh-Hant', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    }).replace(/\//g, '-').replace(',', '');
+                    const eventEndTime = new Date(event.eventEndTime).toLocaleString('zh-Hant', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    }).replace(/\//g, '-').replace(',', '');
+                    const eventHtml = `
+                        <div class="col-md-4">
+                            <div class="product-item">
+                                <div class="product-thumb">
+                                    <img id="event-img" class="img-responsive" src="data:image/jpeg;base64, ${event.eventImg}" alt="event-img"/>
+                                    <div class="preview-meta">
+                                        <ul>
+                                            <li>
+                                                <a href="/events/${event.eventNo}"><i class="tf-ion-ios-search-strong"></i></a>
+                                            </li>
+                                            <li>
+                                                <a href="#!"><i class="tf-ion-ios-heart"></i></a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="product-content event-content">
+                                    <h4><a href="/events/${event.eventNo}">${event.eventName}</a></h4>
+                                    <p class="date">${eventStartTime} ~ ${eventEndTime}</p>
+                                    <div class="small-info">
+                                        <div class="event-location">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="#989797" class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
+                                                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/>
+                                            </svg>
+                                            <span class="location">${event.eventCity}</span>
+                                        </div>
+                                        <div class="visit-count">
+                                            <i class="fa-regular fa-eye"></i>
+                                            <span class="location">${event.visitCount}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', eventHtml);
+                });
+            });
+    }
+    document.getElementById('start').min = new Date().toISOString().split("T")[0];
+    document.getElementById('end').min = new Date().toISOString().split("T")[0];
+
+    $("#clear-filter").click(function (e) {
+        window.location.href = '/events';
+    })
+
+</script>
+
+</body>
+</html>
