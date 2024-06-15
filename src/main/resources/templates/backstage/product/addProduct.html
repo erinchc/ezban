@@ -96,6 +96,14 @@
             font-style: italic;
             color: red;
         }
+        .error-message {
+            font-size: 12px;
+            font-style: italic;
+            font-weight: 700;
+            color: red;
+            margin-top: 5px;
+            display: none;
+        }
         .swal-button-container {
             text-align: center;
             width: 100%;
@@ -203,6 +211,45 @@
     </div>
 </div>
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var numberInputs = document.querySelectorAll('input[type="number"]:not(#remaining_qty)');
+
+        numberInputs.forEach(function(input) {
+            var errorElement = document.createElement('div');
+            errorElement.className = 'error-message';
+            input.parentNode.insertBefore(errorElement, input.nextSibling);
+
+            input.addEventListener('input', function() {
+                var value = parseInt(this.value, 10);
+                if (value < 1 || isNaN(value)) {
+                    this.value = '';
+                    errorElement.textContent = '*請輸入正整數';
+                    errorElement.style.display = 'block';
+                } else {
+                    errorElement.style.display = 'none';
+                }
+            });
+        });
+
+        // 庫存數量的輸入處理
+        var stockInput = document.getElementById('remaining_qty');
+        var stockErrorElement = document.createElement('div');
+        stockErrorElement.className = 'error-message';
+        stockInput.parentNode.insertBefore(stockErrorElement, stockInput.nextSibling);
+
+        stockInput.addEventListener('input', function() {
+            var value = parseInt(this.value, 10);
+            if (value < 0 || isNaN(value)) {
+                this.value = '';
+                stockErrorElement.textContent = '*請輸入非負整數';
+                stockErrorElement.style.display = 'block';
+            } else {
+                stockErrorElement.style.display = 'none';
+            }
+        });
+    });
+</script>
 <script>
     /* 檢查商品上下架時間 */
     $(document).ready(function() {
